@@ -4,6 +4,7 @@
 #include <PR/ultratypes.h>
 
 #include "types.h"
+#include "timer.h"
 
 
 #define TIMER_CONTROL_SHOW  0
@@ -157,7 +158,6 @@ extern s16 sDelayedWarpTimer;
 extern s16 sSourceWarpNodeId;
 extern s32 sDelayedWarpArg;
 extern s16 sUnusedLevelUpdateBss;
-extern s8 sTimerRunning;
 
 struct HudDisplay {
     /*0x00*/ s16 lives;
@@ -185,9 +185,6 @@ enum HUDDisplayFlag {
     HUD_DISPLAY_NONE = 0x0000,
     HUD_DISPLAY_DEFAULT = HUD_DISPLAY_FLAG_LIVES | HUD_DISPLAY_FLAG_COIN_COUNT | HUD_DISPLAY_FLAG_STAR_COUNT | HUD_DISPLAY_FLAG_CAMERA_AND_POWER | HUD_DISPLAY_FLAG_KEYS | HUD_DISPLAY_FLAG_UNKNOWN_0020
 };
-
-
-u16 level_control_timer(s32 timerOp);
 void fade_into_special_warp(u32 arg, u32 color);
 void load_level_init_text(u32 arg);
 s16 level_trigger_warp(struct MarioState *m, s32 warpOp);

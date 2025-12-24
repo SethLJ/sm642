@@ -28,6 +28,7 @@
 #include "level_table.h"
 #include "course_table.h"
 #include "rumble_init.h"
+#include "timer.h"
 
 #define PLAY_MODE_NORMAL 0
 #define PLAY_MODE_PAUSED 2
@@ -168,39 +169,12 @@ FORCE_BSS s16 sDelayedWarpTimer;
 FORCE_BSS s16 sSourceWarpNodeId;
 FORCE_BSS s32 sDelayedWarpArg;
 FORCE_BSS s16 sUnusedLevelUpdateBss;
-FORCE_BSS s8 sTimerRunning;
 s8 gNeverEnteredCastle;
 
 struct MarioState *gMarioState = &gMarioStates[0];
 u8 unused1[2] = { 0 };
 s8 sWarpCheckpointActive = FALSE;
 u8 unused2[4];
-
-u16 level_control_timer(s32 timerOp) {
-    switch (timerOp) {
-        case TIMER_CONTROL_SHOW:
-            gHudDisplay.flags |= HUD_DISPLAY_FLAG_TIMER;
-            sTimerRunning = FALSE;
-            gHudDisplay.timer = 0;
-            break;
-
-        case TIMER_CONTROL_START:
-            sTimerRunning = TRUE;
-            break;
-
-        case TIMER_CONTROL_STOP:
-            sTimerRunning = FALSE;
-            break;
-
-        case TIMER_CONTROL_HIDE:
-            gHudDisplay.flags &= ~HUD_DISPLAY_FLAG_TIMER;
-            sTimerRunning = FALSE;
-            gHudDisplay.timer = 0;
-            break;
-    }
-
-    return gHudDisplay.timer;
-}
 
 u32 pressed_pause(void) {
     u32 dialogActive = get_dialog_id() >= 0;
@@ -434,7 +408,7 @@ void init_mario_after_warp(void) {
 
 #if BUGFIX_KOOPA_RACE_MUSIC
         if (gCurrLevelNum == LEVEL_BOB
-            && get_current_background_music() != SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE) && sTimerRunning) {
+            && get_current_background_music() != SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE) && level_timer_is_running()) {
             play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE), 0);
         }
 #endif
@@ -974,9 +948,7 @@ s32 play_mode_normal(void) {
     warp_area();
     check_instant_warp();
 
-    if (sTimerRunning && gHudDisplay.timer < 17999) {
-        gHudDisplay.timer++;
-    }
+    level_timer_tick();
 
     area_update_objects();
     update_hud_values();
@@ -1161,7 +1133,7 @@ s32 init_level(void) {
     sTransitionTimer = 0;
     D_80339EE0 = 0;
     gHudDisplay.flags = gCurrCreditsEntry == NULL ? HUD_DISPLAY_DEFAULT : HUD_DISPLAY_NONE;
-    sTimerRunning = FALSE;
+    level_timer_reset();
 
     if (sWarpDest.type != WARP_TYPE_NOT_WARPING) {
         if (sWarpDest.nodeId >= WARP_NODE_CREDITS_MIN) {
