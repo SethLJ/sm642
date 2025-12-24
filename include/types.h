@@ -127,7 +127,10 @@ struct GraphNodeObject {
     /*0x1A*/ Vec3s angle;
     /*0x20*/ Vec3f pos;
     /*0x2C*/ Vec3f scale;
-    /*0x38*/ struct AnimInfo animInfo;
+    /*0x38*/ Vec3f prevPos;
+    /*0x44*/ Vec3s prevAngle;
+    /*0x4A*/ Vec3f prevScale;
+    /*0x56*/ struct AnimInfo animInfo;
     /*0x4C*/ struct SpawnInfo *unk4C;
     /*0x50*/ Mat4 *throwMatrix; // matrix ptr
     /*0x54*/ Vec3f cameraToObject;

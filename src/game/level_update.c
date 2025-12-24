@@ -15,6 +15,7 @@
 #include "sound_init.h"
 #include "mario.h"
 #include "camera.h"
+#include "frame_interpolation.h"
 #include "object_list_processor.h"
 #include "ingame_menu.h"
 #include "obj_behaviors.h"
@@ -1125,6 +1126,10 @@ UNUSED static s32 play_mode_unused(void) {
 
 s32 update_level(void) {
     s32 changeLevel;
+
+    if (gIsFrameInterpolated) {
+        return 0;
+    }
 
     switch (sCurrPlayMode) {
         case PLAY_MODE_NORMAL:
