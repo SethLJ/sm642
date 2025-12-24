@@ -18,6 +18,7 @@
 #include "object_list_processor.h"
 #include "platform_displacement.h"
 #include "profiler.h"
+#include "frame_interpolation.h"
 #include "spawn_object.h"
 
 
@@ -56,6 +57,26 @@ struct NumTimesCalled gNumCalls;
  */
 s16 gDebugInfo[16][8];
 s16 gDebugInfoOverwrite[16][8];
+
+static void interpolation_store_object_transform(struct Object *object) {
+    vec3f_copy(object->header.gfx.prevPos, object->header.gfx.pos);
+    vec3s_copy(object->header.gfx.prevAngle, object->header.gfx.angle);
+    vec3f_copy(object->header.gfx.prevScale, object->header.gfx.scale);
+}
+
+static void interpolation_store_all_object_transforms(void) {
+    s32 listIndex;
+
+    for (listIndex = 0; listIndex < NUM_OBJ_LISTS; listIndex++) {
+        struct ObjectNode *objList = &gObjectLists[listIndex];
+        struct ObjectNode *object = objList->next;
+
+        while (object != objList) {
+            interpolation_store_object_transform((struct Object *) object);
+            object = object->next;
+        }
+    }
+}
 
 /**
  * A set of flags to control which objects are updated on a given frame.
@@ -638,6 +659,10 @@ void update_objects(UNUSED s32 unused) {
     stub_debug_5();
 
     gObjectLists = gObjectListArray;
+
+    if (!gIsFrameInterpolated) {
+        interpolation_store_all_object_transforms();
+    }
 
     // If time stop is not active, unload object surfaces
     cycleCounts[1] = get_clock_difference(cycleCounts[0]);

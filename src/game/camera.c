@@ -3506,6 +3506,10 @@ void create_camera(struct GraphNodeCamera *gc, struct AllocOnlyPool *pool) {
     c->yaw = 0;
     vec3f_copy(c->pos, gc->pos);
     vec3f_copy(c->focus, gc->focus);
+    vec3f_copy(gc->prevPos, gc->pos);
+    vec3f_copy(gc->prevFocus, gc->focus);
+    gc->prevRoll = gc->roll;
+    gc->prevRollScreen = gc->rollScreen;
 }
 
 /**
@@ -3515,6 +3519,10 @@ void update_graph_node_camera(struct GraphNodeCamera *gc) {
     UNUSED u8 filler[8];
     UNUSED struct Camera *c = gc->config.camera;
 
+    vec3f_copy(gc->prevPos, gc->pos);
+    vec3f_copy(gc->prevFocus, gc->focus);
+    gc->prevRoll = gc->roll;
+    gc->prevRollScreen = gc->rollScreen;
     gc->rollScreen = gLakituState.roll;
     vec3f_copy(gc->pos, gLakituState.pos);
     vec3f_copy(gc->focus, gLakituState.focus);
