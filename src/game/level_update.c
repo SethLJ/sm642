@@ -1135,6 +1135,11 @@ s32 init_level(void) {
     gHudDisplay.flags = gCurrCreditsEntry == NULL ? HUD_DISPLAY_DEFAULT : HUD_DISPLAY_NONE;
     level_timer_reset();
 
+    if (gCurrCreditsEntry == NULL) {
+        level_control_timer(TIMER_CONTROL_SHOW);
+        level_control_timer(TIMER_CONTROL_START);
+    }
+
     if (sWarpDest.type != WARP_TYPE_NOT_WARPING) {
         if (sWarpDest.nodeId >= WARP_NODE_CREDITS_MIN) {
             warp_credits();
