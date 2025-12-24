@@ -675,7 +675,7 @@ void thread5_game_loop(UNUSED void *arg) {
 
     while (TRUE) {
         gIsFrameInterpolated = interpolationToggle;
-        gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 1.0f;
+        gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 0.0f;
         interpolationToggle ^= 1;
 
         // If the reset timer is active, run the process to reset the game.
