@@ -10,6 +10,7 @@
 #include "rendering_graph_node.h"
 #include "shadow.h"
 #include "sm64.h"
+#include "frame_interpolation.h"
 
 /**
  * This file contains the code that processes the scene graph for rendering.
@@ -128,6 +129,22 @@ u16 gAreaUpdateCounter = 0;
 #ifdef F3DEX_GBI_2
 LookAt lookAt;
 #endif
+
+static void interpolate_vec3f(Vec3f dst, Vec3f prev, Vec3f cur) {
+    dst[0] = prev[0] + (cur[0] - prev[0]) * gFrameInterpolation;
+    dst[1] = prev[1] + (cur[1] - prev[1]) * gFrameInterpolation;
+    dst[2] = prev[2] + (cur[2] - prev[2]) * gFrameInterpolation;
+}
+
+static void interpolate_vec3s(Vec3s dst, Vec3s prev, Vec3s cur) {
+    dst[0] = prev[0] + (s16)((cur[0] - prev[0]) * gFrameInterpolation);
+    dst[1] = prev[1] + (s16)((cur[1] - prev[1]) * gFrameInterpolation);
+    dst[2] = prev[2] + (s16)((cur[2] - prev[2]) * gFrameInterpolation);
+}
+
+static s16 interpolate_s16(s16 prev, s16 cur) {
+    return prev + (s16)((cur - prev) * gFrameInterpolation);
+}
 
 /**
  * Process a master list node.
@@ -311,15 +328,24 @@ static void geo_process_camera(struct GraphNodeCamera *node) {
     Mat4 cameraTransform;
     Mtx *rollMtx = alloc_display_list(sizeof(*rollMtx));
     Mtx *mtx = alloc_display_list(sizeof(*mtx));
+    Vec3f renderPos;
+    Vec3f renderFocus;
+    s16 renderRoll;
+    s16 renderRollScreen;
 
     if (node->fnNode.func != NULL) {
         node->fnNode.func(GEO_CONTEXT_RENDER, &node->fnNode.node, gMatStack[gMatStackIndex]);
     }
-    mtxf_rotate_xy(rollMtx, node->rollScreen);
+    interpolate_vec3f(renderPos, node->prevPos, node->pos);
+    interpolate_vec3f(renderFocus, node->prevFocus, node->focus);
+    renderRoll = interpolate_s16(node->prevRoll, node->roll);
+    renderRollScreen = interpolate_s16(node->prevRollScreen, node->rollScreen);
+
+    mtxf_rotate_xy(rollMtx, renderRollScreen);
 
     gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(rollMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
 
-    mtxf_lookat(cameraTransform, node->pos, node->focus, node->roll);
+    mtxf_lookat(cameraTransform, renderPos, renderFocus, renderRoll);
     mtxf_mul(gMatStack[gMatStackIndex + 1], cameraTransform, gMatStack[gMatStackIndex]);
     gMatStackIndex++;
     mtxf_to_mtx(mtx, gMatStack[gMatStackIndex]);
@@ -808,6 +834,13 @@ static s32 obj_is_in_view(struct GraphNodeObject *node, Mat4 matrix) {
 static void geo_process_object(struct Object *node) {
     Mat4 mtxf;
     s32 hasAnimation = (node->header.gfx.node.flags & GRAPH_RENDER_HAS_ANIMATION) != 0;
+    Vec3f renderPos;
+    Vec3f renderScale;
+    Vec3s renderAngle;
+
+    interpolate_vec3f(renderPos, node->header.gfx.prevPos, node->header.gfx.pos);
+    interpolate_vec3s(renderAngle, node->header.gfx.prevAngle, node->header.gfx.angle);
+    interpolate_vec3f(renderScale, node->header.gfx.prevScale, node->header.gfx.scale);
 
     if (node->header.gfx.areaIndex == gCurGraphNodeRoot->areaIndex) {
         if (node->header.gfx.throwMatrix != NULL) {
@@ -815,14 +848,14 @@ static void geo_process_object(struct Object *node) {
                      gMatStack[gMatStackIndex]);
         } else if (node->header.gfx.node.flags & GRAPH_RENDER_BILLBOARD) {
             mtxf_billboard(gMatStack[gMatStackIndex + 1], gMatStack[gMatStackIndex],
-                           node->header.gfx.pos, gCurGraphNodeCamera->roll);
+                           renderPos, gCurGraphNodeCamera->roll);
         } else {
-            mtxf_rotate_zxy_and_translate(mtxf, node->header.gfx.pos, node->header.gfx.angle);
+            mtxf_rotate_zxy_and_translate(mtxf, renderPos, renderAngle);
             mtxf_mul(gMatStack[gMatStackIndex + 1], mtxf, gMatStack[gMatStackIndex]);
         }
 
         mtxf_scale_vec3f(gMatStack[gMatStackIndex + 1], gMatStack[gMatStackIndex + 1],
-                         node->header.gfx.scale);
+                         renderScale);
         node->header.gfx.throwMatrix = &gMatStack[++gMatStackIndex];
         node->header.gfx.cameraToObject[0] = gMatStack[gMatStackIndex][3][0];
         node->header.gfx.cameraToObject[1] = gMatStack[gMatStackIndex][3][1];

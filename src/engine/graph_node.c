@@ -312,6 +312,9 @@ struct GraphNodeObject *init_graph_node_object(struct AllocOnlyPool *pool,
         vec3f_copy(graphNode->pos, pos);
         vec3f_copy(graphNode->scale, scale);
         vec3s_copy(graphNode->angle, angle);
+        vec3f_copy(graphNode->prevPos, pos);
+        vec3s_copy(graphNode->prevAngle, angle);
+        vec3f_copy(graphNode->prevScale, scale);
         graphNode->sharedChild = sharedChild;
         graphNode->throwMatrix = NULL;
         graphNode->animInfo.animID = 0;
@@ -694,6 +697,9 @@ void geo_obj_init(struct GraphNodeObject *graphNode, void *sharedChild, Vec3f po
     vec3f_set(graphNode->scale, 1.0f, 1.0f, 1.0f);
     vec3f_copy(graphNode->pos, pos);
     vec3s_copy(graphNode->angle, angle);
+    vec3f_copy(graphNode->prevPos, pos);
+    vec3s_copy(graphNode->prevAngle, angle);
+    vec3f_copy(graphNode->prevScale, graphNode->scale);
 
     graphNode->sharedChild = sharedChild;
     graphNode->unk4C = 0;

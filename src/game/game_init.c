@@ -12,6 +12,7 @@
 #include "main.h"
 #include "memory.h"
 #include "profiler.h"
+#include "frame_interpolation.h"
 #include "save_file.h"
 #include "seq_ids.h"
 #include "sound_init.h"
@@ -60,10 +61,13 @@ static s32 sUnusedGameInitValue = 0;
 
 // General timer that runs as the game starts
 u32 gGlobalTimer = 0;
+u8 gIsFrameInterpolated = FALSE;
+f32 gFrameInterpolation = 1.0f;
 
 // Framebuffer rendering values (max 3)
 u16 sRenderedFramebuffer = 0;
 u16 sRenderingFramebuffer = 0;
+static u32 sRenderFrameCounter = 0;
 
 // Goddard Vblank Function Caller
 void (*gGoddardVblankCallback)(void) = NULL;
@@ -346,18 +350,19 @@ void render_init(void) {
  * Selects the location of the F3D output buffer (gDisplayListHead).
  */
 void select_gfx_pool(void) {
-    gGfxPool = &gGfxPools[gGlobalTimer % ARRAY_COUNT(gGfxPools)];
+    gGfxPool = &gGfxPools[sRenderFrameCounter % ARRAY_COUNT(gGfxPools)];
     set_segment_base_addr(1, gGfxPool->buffer);
     gGfxSPTask = &gGfxPool->spTask;
     gDisplayListHead = gGfxPool->buffer;
     gGfxPoolEnd = (u8 *) (gGfxPool->buffer + GFX_POOL_SIZE);
+    sRenderFrameCounter++;
 }
 
 /**
  * This function:
  * - Sends the current master display list out to be rendered.
  * - Tells the VI which color framebuffer to be displayed.
- * - Yields to the VI framerate twice, locking the game at 30 FPS.
+ * - Yields to the VI framerate to present at full speed.
  * - Selects which framebuffer will be rendered and displayed to next time.
  */
 void display_and_vsync(void) {
@@ -372,14 +377,12 @@ void display_and_vsync(void) {
     osRecvMesg(&gGameVblankQueue, &gMainReceivedMesg, OS_MESG_BLOCK);
     osViSwapBuffer((void *) PHYSICAL_TO_VIRTUAL(gPhysicalFramebuffers[sRenderedFramebuffer]));
     profiler_log_thread5_time(THREAD5_END);
-    osRecvMesg(&gGameVblankQueue, &gMainReceivedMesg, OS_MESG_BLOCK);
     if (++sRenderedFramebuffer == 3) {
         sRenderedFramebuffer = 0;
     }
     if (++sRenderingFramebuffer == 3) {
         sRenderingFramebuffer = 0;
     }
-    gGlobalTimer++;
 }
 
 // Controls
@@ -642,6 +645,7 @@ void setup_game_memory(void) {
  */
 void thread5_game_loop(UNUSED void *arg) {
     struct LevelCommand *addr;
+    u8 interpolationToggle = FALSE;
 
     CN_DEBUG_PRINTF(("start gfx thread\n"));
 
@@ -670,6 +674,10 @@ void thread5_game_loop(UNUSED void *arg) {
     render_init();
 
     while (TRUE) {
+        gIsFrameInterpolated = interpolationToggle;
+        gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 0.0f;
+        interpolationToggle ^= 1;
+
         // If the reset timer is active, run the process to reset the game.
         if (gResetTimer != 0) {
             draw_reset_bars();
@@ -686,10 +694,16 @@ void thread5_game_loop(UNUSED void *arg) {
             osContStartReadData(&gSIEventMesgQueue);
         }
 
-        audio_game_loop_tick();
+        if (!gIsFrameInterpolated) {
+            audio_game_loop_tick();
+        }
         select_gfx_pool();
         read_controller_inputs();
         addr = level_script_execute(addr);
+
+        if (!gIsFrameInterpolated) {
+            gGlobalTimer++;
+        }
 
         display_and_vsync();
 
