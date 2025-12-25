@@ -8,6 +8,7 @@
 #include "buffers/framebuffers.h"
 #include "buffers/zbuffer.h"
 #include "engine/level_script.h"
+#include "area.h"
 #include "game_init.h"
 #include "main.h"
 #include "memory.h"
