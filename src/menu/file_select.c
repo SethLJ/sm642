@@ -357,7 +357,7 @@ static void bhv_menu_button_growing_from_main_menu(struct Object *button) {
         button->oParentRelativePosZ += 1112.5;
     }
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 16) {
+    if (button->oMenuButtonTimer >= 16) {
         button->oParentRelativePosX = 0.0f;
         button->oParentRelativePosY = 0.0f;
         button->oMenuButtonState = MENU_BUTTON_STATE_FULLSCREEN;
@@ -384,7 +384,7 @@ static void bhv_menu_button_shrinking_to_main_menu(struct Object *button) {
         button->oParentRelativePosZ -= 1112.5;
     }
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 16) {
+    if (button->oMenuButtonTimer >= 16) {
         button->oParentRelativePosX = button->oMenuButtonOrigPosX;
         button->oParentRelativePosY = button->oMenuButtonOrigPosY;
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
@@ -409,7 +409,7 @@ static void bhv_menu_button_growing_from_submenu(struct Object *button) {
     button->oParentRelativePosY -= button->oMenuButtonOrigPosY / 16.0;
     button->oParentRelativePosZ -= 116.25;
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 16) {
+    if (button->oMenuButtonTimer >= 16) {
         button->oParentRelativePosX = 0.0f;
         button->oParentRelativePosY = 0.0f;
         button->oMenuButtonState = MENU_BUTTON_STATE_FULLSCREEN;
@@ -436,7 +436,7 @@ static void bhv_menu_button_shrinking_to_submenu(struct Object *button) {
         button->oParentRelativePosZ += 116.25;
     }
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 16) {
+    if (button->oMenuButtonTimer >= 16) {
         button->oParentRelativePosX = button->oMenuButtonOrigPosX;
         button->oParentRelativePosY = button->oMenuButtonOrigPosY;
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
@@ -465,7 +465,8 @@ static void bhv_menu_button_zoom_in_out(struct Object *button) {
         }
     }
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 8) {
+    if (button->oMenuButtonTimer >= 8) {
+        button->oParentRelativePosZ = button->oMenuButtonOrigPosZ;
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
         button->oMenuButtonTimer = 0;
     }
@@ -478,7 +479,7 @@ static void bhv_menu_button_zoom_in_out(struct Object *button) {
 static void bhv_menu_button_zoom_in(struct Object *button) {
     button->oMenuButtonScale += 0.0022;
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 10) {
+    if (button->oMenuButtonTimer >= 10) {
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
         button->oMenuButtonTimer = 0;
     }
@@ -492,7 +493,7 @@ static void bhv_menu_button_zoom_in(struct Object *button) {
 static void bhv_menu_button_zoom_out(struct Object *button) {
     button->oMenuButtonScale -= 0.0022;
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 10) {
+    if (button->oMenuButtonTimer >= 10) {
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
         button->oMenuButtonTimer = 0;
     }
@@ -1159,6 +1160,13 @@ void check_sound_mode_menu_clicked_buttons(struct Object *soundModeButton) {
  * retuning sSelectedFileNum to a save value defined in fileNum.
  */
 void load_main_menu_save_file(struct Object *fileButton, s32 fileNum) {
+    if (fileButton->oMenuButtonState == MENU_BUTTON_STATE_GROWING
+        && fileButton->oMenuButtonTimer >= 16) {
+        // If the grow animation skipped its last update, force completion so the selection registers.
+        fileButton->oMenuButtonState = MENU_BUTTON_STATE_FULLSCREEN;
+        fileButton->oMenuButtonTimer = 0;
+    }
+
     if (fileButton->oMenuButtonState == MENU_BUTTON_STATE_FULLSCREEN) {
         sSelectedFileNum = fileNum;
     }
