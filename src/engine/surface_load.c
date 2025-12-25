@@ -9,6 +9,7 @@
 #include "game/object_helpers.h"
 #include "game/macro_special_objects.h"
 #include "surface_collision.h"
+#include "game/game_init.h"
 #include "game/mario.h"
 #include "game/object_list_processor.h"
 #include "surface_load.h"
@@ -364,6 +365,11 @@ static struct Surface *read_surface_data(TerrainData *vertexData, TerrainData **
     surface->vertex1[2] = z1;
     surface->vertex2[2] = z2;
     surface->vertex3[2] = z3;
+
+    vec3s_copy(surface->prevVertex1, surface->vertex1);
+    vec3s_copy(surface->prevVertex2, surface->vertex2);
+    vec3s_copy(surface->prevVertex3, surface->vertex3);
+    surface->modifiedTimestamp = gGlobalTimer;
 
     surface->normal.x = nx;
     surface->normal.y = ny;

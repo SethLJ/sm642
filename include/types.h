@@ -231,6 +231,10 @@ struct Surface {
     /*0x0A*/ Vec3Terrain vertex1;
     /*0x10*/ Vec3Terrain vertex2;
     /*0x16*/ Vec3Terrain vertex3;
+    Vec3s prevVertex1;
+    Vec3s prevVertex2;
+    Vec3s prevVertex3;
+    u32 modifiedTimestamp;
     /*0x1C*/ struct {
         f32 x;
         f32 y;

@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "profiler.h"
 #include "frame_interpolation.h"
+#include "engine/surface_collision.h"
 #include "save_file.h"
 #include "seq_ids.h"
 #include "sound_init.h"
@@ -676,6 +677,7 @@ void thread5_game_loop(UNUSED void *arg) {
     while (TRUE) {
         gIsFrameInterpolated = interpolationToggle;
         gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 0.0f;
+        gInterpolatingSurfaces = gIsFrameInterpolated;
         interpolationToggle ^= 1;
 
         // If the reset timer is active, run the process to reset the game.
