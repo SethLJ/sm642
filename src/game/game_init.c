@@ -647,8 +647,6 @@ void setup_game_memory(void) {
  */
 void thread5_game_loop(UNUSED void *arg) {
     struct LevelCommand *addr;
-    u8 interpolationToggle = FALSE;
-
     CN_DEBUG_PRINTF(("start gfx thread\n"));
 
     setup_game_memory();
@@ -676,16 +674,9 @@ void thread5_game_loop(UNUSED void *arg) {
     render_init();
 
     while (TRUE) {
-        if (gCurrentArea == NULL) {
-            gIsFrameInterpolated = FALSE;
-            gFrameInterpolation = 1.0f;
-            gInterpolatingSurfaces = FALSE;
-        } else {
-            gIsFrameInterpolated = interpolationToggle;
-            gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 1.0f;
-            gInterpolatingSurfaces = gIsFrameInterpolated;
-            interpolationToggle ^= 1;
-        }
+        gIsFrameInterpolated = FALSE;
+        gFrameInterpolation = 1.0f;
+        gInterpolatingSurfaces = FALSE;
 
         // If the reset timer is active, run the process to reset the game.
         if (gResetTimer != 0) {
