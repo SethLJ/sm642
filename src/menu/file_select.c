@@ -465,7 +465,8 @@ static void bhv_menu_button_zoom_in_out(struct Object *button) {
         }
     }
     button->oMenuButtonTimer++;
-    if (button->oMenuButtonTimer == 8) {
+    if (button->oMenuButtonTimer >= 8) {
+        button->oParentRelativePosZ = button->oMenuButtonOrigPosZ;
         button->oMenuButtonState = MENU_BUTTON_STATE_DEFAULT;
         button->oMenuButtonTimer = 0;
     }
