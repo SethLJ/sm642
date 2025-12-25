@@ -8,6 +8,7 @@
 #include "buffers/framebuffers.h"
 #include "buffers/zbuffer.h"
 #include "engine/level_script.h"
+#include "area.h"
 #include "game_init.h"
 #include "main.h"
 #include "memory.h"
@@ -675,10 +676,16 @@ void thread5_game_loop(UNUSED void *arg) {
     render_init();
 
     while (TRUE) {
-        gIsFrameInterpolated = interpolationToggle;
-        gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 0.0f;
-        gInterpolatingSurfaces = gIsFrameInterpolated;
-        interpolationToggle ^= 1;
+        if (gCurrentArea == NULL) {
+            gIsFrameInterpolated = FALSE;
+            gFrameInterpolation = 1.0f;
+            gInterpolatingSurfaces = FALSE;
+        } else {
+            gIsFrameInterpolated = interpolationToggle;
+            gFrameInterpolation = gIsFrameInterpolated ? 0.5f : 1.0f;
+            gInterpolatingSurfaces = gIsFrameInterpolated;
+            interpolationToggle ^= 1;
+        }
 
         // If the reset timer is active, run the process to reset the game.
         if (gResetTimer != 0) {
