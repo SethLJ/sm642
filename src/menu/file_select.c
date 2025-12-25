@@ -1160,6 +1160,13 @@ void check_sound_mode_menu_clicked_buttons(struct Object *soundModeButton) {
  * retuning sSelectedFileNum to a save value defined in fileNum.
  */
 void load_main_menu_save_file(struct Object *fileButton, s32 fileNum) {
+    if (fileButton->oMenuButtonState == MENU_BUTTON_STATE_GROWING
+        && fileButton->oMenuButtonTimer >= 16) {
+        // If the grow animation skipped its last update, force completion so the selection registers.
+        fileButton->oMenuButtonState = MENU_BUTTON_STATE_FULLSCREEN;
+        fileButton->oMenuButtonTimer = 0;
+    }
+
     if (fileButton->oMenuButtonState == MENU_BUTTON_STATE_FULLSCREEN) {
         sSelectedFileNum = fileNum;
     }
